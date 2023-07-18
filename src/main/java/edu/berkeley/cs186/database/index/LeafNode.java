@@ -205,6 +205,7 @@ class LeafNode extends BPlusNode {
         if(index == -1)return;
         keys.remove(index);
         rids.remove(index);
+        sync();
         return;
     }
 

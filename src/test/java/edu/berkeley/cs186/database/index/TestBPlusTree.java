@@ -433,7 +433,6 @@ public class TestBPlusTree {
             for (int n = 0; n < 2; ++n) {
                 Collections.shuffle(keys, new Random(42));
                 Collections.shuffle(rids, new Random(42));
-
                 // Insert all the keys.
                 BPlusTree tree = getBPlusTree(Type.intType(), d);
                 for (int i = 0; i < keys.size(); ++i) {

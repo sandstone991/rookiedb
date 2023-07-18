@@ -199,8 +199,8 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        LeafNode currLeaf = root.getLeftmostLeaf();
+        return new BPlusTreeIterator(currLeaf,0);
     }
 
     /**
@@ -232,8 +232,10 @@ public class BPlusTree {
         LockUtil.ensureSufficientLockHeld(lockContext, LockType.NL);
 
         // TODO(proj2): Return a BPlusTreeIterator.
-
-        return Collections.emptyIterator();
+        LeafNode currLeaf = root.get(key);
+        if(currLeaf == null)return Collections.emptyIterator();
+        int index = InnerNode.numLessThan(key,currLeaf.getKeys());
+        return new BPlusTreeIterator(currLeaf,index);
     }
 
     /**
@@ -430,19 +432,28 @@ public class BPlusTree {
     // Iterator ////////////////////////////////////////////////////////////////
     private class BPlusTreeIterator implements Iterator<RecordId> {
         // TODO(proj2): Add whatever fields and constructors you want here.
-
+        private LeafNode currLeaf;
+        private int currIndex;
+        BPlusTreeIterator(LeafNode currLeaf, int currIndex) {
+            this.currLeaf = currLeaf;      
+            this.currIndex = currIndex ;      
+        }
         @Override
         public boolean hasNext() {
             // TODO(proj2): implement
-
-            return false;
+            if(currLeaf == null)return false;
+            return currIndex < currLeaf.getKeys().size() || currLeaf.getRightSibling().isPresent();
         }
 
         @Override
         public RecordId next() {
             // TODO(proj2): implement
-
-            throw new NoSuchElementException();
+            if(!hasNext())throw new NoSuchElementException();
+            if(currIndex == currLeaf.getKeys().size()){
+                currLeaf = currLeaf.getRightSibling().get();
+                currIndex = 0;
+            }
+            return currLeaf.getRids().get(currIndex++);
         }
     }
 }

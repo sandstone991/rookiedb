@@ -107,12 +107,13 @@ class InnerNode extends BPlusNode {
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
         // TODO(proj2): implement
         //recursively put (until we reach the leaf node, which is the base case)
-        Optional<Pair<DataBox, Long>> pair = get(key).put(key, rid);
+        BPlusNode child = getChild(numLessThanEqual(key, keys));
+        Optional<Pair<DataBox, Long>> pair =  child.put(key, rid);
         //cleanup
         if(pair.isPresent()){
             int index = InnerNode.numLessThanEqual(key, keys);
             keys.add(index,pair.get().getFirst());
-            children.add(index,pair.get().getSecond());
+            children.add(index+1,pair.get().getSecond());
             //overflow
             if(keys.size() > metadata.getOrder() * 2){
             //split d in the first node & d+1 in the second newly created node
