@@ -262,7 +262,6 @@ public class TestInnerNode {
         rids2.add(0, rid);
         checkTreeMatchesExpectations();
     }
-
     @Test
     @Category(PublicTests.class)
     public void testRemove() {
@@ -415,4 +414,5 @@ public class TestInnerNode {
             assertEquals(inner, parsed);
         }
     }
+   
 }

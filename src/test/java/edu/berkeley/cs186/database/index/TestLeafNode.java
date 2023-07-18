@@ -330,4 +330,26 @@ public class TestLeafNode {
             assertEquals(leaf, LeafNode.fromBytes(metadata, bufferManager, treeContext, pageNum));
         }
     }
+
+    @Test
+    @Category(PublicTests.class)
+    public void testPut(){
+        int d = 1;
+        setBPlusTreeMetadata(Type.intType(), d);
+        LeafNode leaf = getEmptyLeaf(Optional.empty());
+        List<Pair<DataBox, RecordId>> data = new ArrayList<>();
+        //generate data
+        for (int i = 0; i < 2 * d; ++i) {
+            DataBox key = new IntDataBox(i);
+            RecordId rid = new RecordId(i, (short) i);
+            data.add(i, new Pair<>(key, rid));
+        }
+        //put data (no overflow)
+        for (int i = 0; i < 2 * d; ++i) {
+            assertEquals(Optional.empty(), leaf.put(data.get(i).getFirst(), data.get(i).getSecond()));
+        }
+        //put data (overflow)
+        assertEquals(Optional.of(new Pair<>(new IntDataBox(2 * d -1), Long.valueOf(2 * d - 1))),
+         leaf.put(new IntDataBox(2*d), new RecordId(2*d, (short) (2*d))));
+    }  
 }

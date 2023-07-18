@@ -8,7 +8,7 @@ import edu.berkeley.cs186.database.databox.Type;
 import edu.berkeley.cs186.database.memory.BufferManager;
 import edu.berkeley.cs186.database.memory.Page;
 import edu.berkeley.cs186.database.table.RecordId;
-
+import edu.berkeley.cs186.database.common.Utils;
 import java.nio.ByteBuffer;
 import java.util.*;
 
@@ -81,24 +81,58 @@ class InnerNode extends BPlusNode {
     @Override
     public LeafNode get(DataBox key) {
         // TODO(proj2): implement
-
-        return null;
+        // search for a key equal to or less than the given key
+        int index = numLessThanEqual(key, keys);
+        // jump to the child node
+        BPlusNode child = getChild(index);
+          // recursively call get on the child node, base case is within the leaf node
+         return child.get(key);
     }
 
     // See BPlusNode.getLeftmostLeaf.
     @Override
     public LeafNode getLeftmostLeaf() {
-        assert(children.size() > 0);
         // TODO(proj2): implement
-
-        return null;
+        assert(children.size() > 0);
+        BPlusNode child = getChild(0);
+        if(child instanceof LeafNode){
+            return (LeafNode) child;
+        }
+        // recursively call getLeftmostLeaf on the child node
+        return child.getLeftmostLeaf();
     }
 
     // See BPlusNode.put.
     @Override
     public Optional<Pair<DataBox, Long>> put(DataBox key, RecordId rid) {
         // TODO(proj2): implement
-
+        //recursively put (until we reach the leaf node, which is the base case)
+        Optional<Pair<DataBox, Long>> pair = get(key).put(key, rid);
+        //cleanup
+        if(pair.isPresent()){
+            int index = InnerNode.numLessThanEqual(key, keys);
+            keys.add(index,pair.get().getFirst());
+            children.add(index,pair.get().getSecond());
+            //overflow
+            if(keys.size() > metadata.getOrder() * 2){
+            //split d in the first node & d+1 in the second newly created node
+            //return the first key of the second node and the page number of the second node
+            //create a new node
+            int d = metadata.getOrder();
+            List<DataBox> newKeys = keys.subList(d+1, keys.size());
+            List<Long> newChildren = children.subList(d+1, children.size());
+            DataBox movedChildKey = keys.get(d);
+            InnerNode newNode = new InnerNode(metadata, bufferManager, newKeys, newChildren, treeContext);
+            //update the right sibling of the current node
+            //update the keys and rids of the current node
+            keys = keys.subList(0, d);
+            // +1 so we don't forget rightmost child
+            children = children.subList(0, d + 1);
+            sync();
+            return Optional.of(new Pair<>(movedChildKey, newNode.getPage().getPageNum()));
+            }
+        }
+        sync();
         return Optional.empty();
     }
 
@@ -115,7 +149,8 @@ class InnerNode extends BPlusNode {
     @Override
     public void remove(DataBox key) {
         // TODO(proj2): implement
-
+        get(key).remove(key);
+        sync();
         return;
     }
 
