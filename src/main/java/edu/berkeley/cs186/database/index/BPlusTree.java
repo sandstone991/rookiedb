@@ -297,7 +297,30 @@ public class BPlusTree {
         // Note: You should NOT update the root variable directly.
         // Use the provided updateRoot() helper method to change
         // the tree's root if the old root splits.
-
+        //raise an exception if the fillFactor is not between 0 and 1
+        if(fillFactor < 0 || fillFactor > 1)throw new BPlusTreeException("The fillFactor is not between 0 and 1");
+        //sort the data
+        List<Pair<DataBox, RecordId>> sortedData = new ArrayList<>();
+        while(data.hasNext()){
+            sortedData.add(data.next());
+        }
+        Collections.sort(sortedData,Comparator.comparing(Pair::getFirst));
+        //extract iterator
+        Iterator<Pair<DataBox, RecordId>> sortedDataIterator = sortedData.iterator();
+        //bulk load
+        while(sortedDataIterator.hasNext()){
+        Optional<Pair<DataBox,Long>> pair = root.bulkLoad(sortedDataIterator,fillFactor);
+        if(pair.isPresent()){
+            List<DataBox> keys = new ArrayList<>();
+            keys.add(pair.get().getFirst());
+            List<Long> children = new ArrayList<>();
+            //split into two, the first one is the root (now the previous root), the second one is the new node
+            children.add(root.getPage().getPageNum());
+            children.add(pair.get().getSecond());
+            InnerNode newRoot = new InnerNode(metadata, bufferManager, keys, children, lockContext);
+            updateRoot(newRoot);
+        }
+    }
         return;
     }
 
